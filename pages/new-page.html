@@ -1,0 +1,245 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="new-page">
+
+  <style is="custom-style">
+    paper-scroll-header-panel {
+      @apply(--layout-fit);
+      @apply(--layout-vertical);
+      @apply(--paper-font-common-base);
+      background-color: rgb(238, 238, 238);
+    }
+    paper-toolbar.tall .title {
+      font-size: 40px;
+      margin-left: 60px;
+      -webkit-transform-origin: left center;
+      transform-origin: left center;
+      overflow: visible;
+    }
+    paper-item {
+      @apply(--layout-horizontal);
+      margin: 10px 16px 0 16px;
+      padding: 17px;
+      border-radius: 6px;
+      background-color: white;
+      border: 1px solid #ddd;
+    }
+    paper-input, paper-textarea {
+      margin-top: -10px;
+    }
+    select {
+      margin-top: 10px;
+    }
+    section label {
+      font-weight: bold;
+    }
+    max-width {
+      max-width: 400px;
+    }
+    section {
+      padding: 15px;
+    }
+  </style>
+
+  <template>
+    <app-cache id="cache" data="{{cache}}"></app-cache>
+    <paper-scroll-header-panel id="feedPanel" class="fit" condenses keep-condensed-header>
+      <paper-toolbar class="tall">
+        <span class="flex"></span>
+        <paper-icon-button icon="more-vert"></paper-icon-button>
+        <div id="title" class="bottom title">Create new conversation</div>
+      </paper-toolbar>
+
+      <paper-item>
+        <div class="horizontal-section">
+          <section>
+            <label>What type of conversation do you want to create?</label>
+            <br>
+            <paper-radio-group selected="{{_type}}">
+              <paper-radio-button name="group">Group</paper-radio-button>
+              <paper-radio-button name="direct">Direct</paper-radio-button>
+              <paper-radio-button name="open">Open</paper-radio-button>
+            </paper-radio-group>
+          </section>
+
+          <template is="dom-if" if="[[_showNameInput(_type)]]">
+            <section>
+              <label>[[_nameText(_type)]]</label>
+              <paper-input id="name" class="max-width" value="{{_name::input}}" label="Name"></paper-input>
+            </section>
+
+            <section hidden$="[[!_showDescrInput(_type)]]">
+              <label>Provide a description (optional)</label>
+              <paper-textarea class="max-width" value="{{_description::input}}" maxlength="1024" label="Description"></paper-textarea>
+            </section>
+          </template>
+
+          <template is="dom-if" if="[[_type]]">
+            <section>
+              <label>[[_membersText(_type)]]</label>
+              <select id="membersList" class="max-width" on-change="_getSelectValues" size="12" multiple="multiple" >
+                <template is="dom-repeat" items="[[users]]" as="user">
+                  <option value="[[user.userId]]">[[user.displayName]]</option>
+                </template>
+              </select>
+            </section>
+          </template>
+          <section> 
+            <paper-button raised disabled$="[[_isFormInvalid(_type, _name, _members)]]" on-click="_create">Create Conversation</paper-button>
+          </section>
+
+        </div>
+      </paper-item>
+
+    </paper-scroll-header-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'new-page',
+
+      properties: {
+        _type: {
+          type: String,
+          value: '',
+          observer: '_typeChanged'
+        },
+        _members: {
+          type: Array,
+          value: function () { return []; }
+        },
+        _name: {
+          type: String,
+          value: ''
+        },
+        _invalid: {
+          type: Boolean
+        }
+      },
+
+      ready: function () {
+        this.users = this.$.cache.getSortedUsers();
+      },
+
+      _typeChanged: function (type) {
+        if (type && this._showNameInput()) {
+          this.async(function () {
+            this.$$('#name').inputElement.focus();
+          });
+        }
+      },
+
+      _showNameInput: function () {
+        return this._type === 'group' || this._type === 'open';
+      },
+
+      _showDescrInput: function () {
+        return this._type === 'open';
+      },
+
+      _nameText: function (type) {
+        switch (type) {
+          case 'direct':
+          return '';
+          case 'group':
+          return 'Give the conversation a name (optional)';
+          case 'open':
+          return 'Give the conversation a name (required)';
+        }
+      },
+
+      _membersText: function (type) {
+        switch (type) {
+          case 'direct':
+          return 'Choose a conversation partner. Your conversation will stay private.';
+          case 'group':
+          return 'Choose at least one member. More members can always be added later.';
+          case 'open':
+          return 'Choose some initial members. Anybody in your domain can join themselves.';
+        }
+      },
+
+      _isFormValid: function () {
+        switch (this._type) {
+          case 'direct':
+          return this._members.length === 1;
+          case 'group':
+          return this._members.length >= 1;
+          case 'open':
+          return !!this._name;
+          default:
+          return false;
+        }
+        return false;
+      },
+
+      _isFormInvalid: function () {
+        return !this._isFormValid();
+      },
+
+      _getSelectValues: function () {
+        var select  = this.$$('#membersList');
+        var result = [];
+        var options = select && select.options;
+        var opt;
+
+        for (var i=0, iLen=options.length; i<iLen; i++) {
+          opt = options[i];
+
+          if (opt.selected) {
+            result.push(opt.value || opt.text);
+          }
+        }
+        this.set('_members', result);
+      },
+
+      _create: function () {
+        switch (this._type) {
+          case 'direct':
+          var user = this.$.cache.getUser(this._members[0]);
+          app.api.createDirectConversation(user.userId).then(function (newConv) {
+            // Conversation is added to the cache on receipt of conversationCreated event
+            app.showToast('Conversation with ' + user.displayName + ' successfully created.');
+            router.go('/direct/' + newConv.convId);
+          }, function (err) {
+            if (err === 'EXISTS') {
+              app.showToast('Conversation with ' + user.displayName + ' already exists.');
+            } else {
+              app.showToast('Unable to create conversation.');
+            }
+          });
+          return;
+
+          case 'group':
+          var user = this.$.cache.getUser(this._members[0]);
+          app.api.createGroupConversation(this._members, this._name).then(function (newConv) {
+            // Conversation is added to the cache on receipt of conversationCreated event
+            app.showToast('Conversation successfully created.');
+            router.go('/group/' + newConv.convId);
+          }, function (err) {
+            app.showToast('Unable to create conversation.');
+          });
+          return;
+
+          case 'open':
+          var user = this.$.cache.getUser(this._members[0]);
+          app.api.createOpenConversation(this._members, this._name, this._description).then(function (newConv) {
+            // Conversation is added to the cache on receipt of conversationCreated event
+            app.showToast('Conversation successfully created.');
+            router.go('/group/' + newConv.convId);
+          }, function (err) {
+            app.showToast('Unable to create conversation.');
+          });
+          return;
+        }
+      },
+
+    });
+  })();
+</script>

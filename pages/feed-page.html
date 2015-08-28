@@ -1,0 +1,73 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="feed-page">
+
+  <style is="custom-style">
+  </style>
+
+  <template>
+    <app-cache id="cache"></app-cache>
+    <conversation-panel conversation="{{conversation}}" items="{{items}}"></conversation-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'feed-page',
+
+      properties: {
+        convId: {
+          type: String,
+          observer: '_convIdChanged'
+        },
+        items: {
+          type: Array,
+          value: function () { return []; }
+        }
+      },
+
+      ready: function () {
+        app.api.addEventListener('itemAdded', function (evt) {
+          var item = evt.item;
+          if (item.convId === this.convId) {
+            this.push('items', item);
+          }
+        }.bind(this));
+      },
+
+      _convIdChanged: function (convId) {
+        if (!convId) {
+          return;
+        }
+
+        var conv = this.$.cache.getConversation(convId);
+        if (!conv) {
+          // workaround until we have an event telling that the conversation has been
+          // added to the cache
+          this.async(function () {
+            var conv = this.$.cache.getConversation(convId);
+            this.set('conversation', conv);
+          }, 1000);
+        } else {
+          this.set('conversation', conv);
+        }
+        
+
+        var options = {
+          maxResultsLimit: 20,
+          direction: 'BEFORE',
+          creationDate: Date.now()
+        }
+        app.api.getConversationItems(this.convId, options).then(function (items) {
+          this.set('items', items);
+        }.bind(this));
+      }
+
+    });
+  })();
+</script>

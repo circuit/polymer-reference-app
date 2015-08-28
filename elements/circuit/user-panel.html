@@ -1,0 +1,74 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="user-panel">
+
+  <style is="custom-style">
+    paper-scroll-header-panel {
+      @apply(--layout-fit);
+      @apply(--layout-vertical);
+      @apply(--paper-font-common-base);
+      background-color: rgb(238, 238, 238);
+    }
+    paper-toolbar.medium-tall .title {
+      margin-left: 18px;
+    }
+
+    paper-icon-item {
+      @apply(--layout-horizontal);
+      margin: 10px 16px 0 16px;
+      padding: 17px;
+      border-radius: 6px;
+      background-color: white;
+      border: 1px solid #ddd;
+    }
+  </style>
+
+  <template>
+    <paper-scroll-header-panel id="feedPanel" class="fit" condenses keep-condensed-header>
+      <paper-toolbar class="tall">
+        <span class="flex"></span>
+        <div id="title" class="bottom title">[[user.displayName]]</div>
+      </paper-toolbar>
+      <paper-icon-item>
+        <paper-item-body two-line>
+          <div>[[user.displayName]]</div>
+          <div secondary>[[user.emailAddress]]</div>
+          <div secondary>[[user.phoneNumber]]</div>
+          <div secondary>[[user.jobTitle]]</div>
+          <div secondary>[[user.company]]</div>
+        </paper-item-body>
+      </paper-icon-item>
+    </paper-scroll-header-panel>
+  </template>
+
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'user-panel',
+
+      properties: {
+        user: {
+          type: Object,
+          value: function() { return null; }
+        },
+      },
+
+      ready: function () {
+        this.addEventListener('paper-header-transform', function(event) {
+          var title = this.$.title;
+          var detail = event.detail;
+          var deltaHeight = detail.height - detail.condensedHeight;
+          var scale = Math.max(0.6, (deltaHeight - detail.y) / (deltaHeight / 0.4)  + 0.6);
+          Polymer.Base.transform('scale(' + scale + ') translateZ(0)', title);
+        });
+      },
+
+    });
+  })();
+</script>

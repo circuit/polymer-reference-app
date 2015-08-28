@@ -1,0 +1,43 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="user-page">
+
+  <style is="custom-style">
+  </style>
+
+  <template>
+    <app-cache id="cache"></app-cache>
+    <user-panel user="{{user}}"></user-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'user-page',
+
+      properties: {
+        userId: {
+          type: String,
+          observer: '_userIdChanged'
+        }
+      },
+
+      ready: function () {
+      },
+
+      _userIdChanged: function (userId) {
+        if (!userId) {
+          return;
+        }
+
+        this.set('user', this.$.cache.getUser(userId));
+      }
+
+    });
+  })();
+</script>

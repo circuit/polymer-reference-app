@@ -1,0 +1,74 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="avatar-round">
+
+  <style is="custom-style">
+    img {
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      padding: 0px;
+      margin: 1px;
+      box-shadow: 0px 0px 2px rgba(0,0,0,0.4);  
+    }
+    img.AVAILABLE {
+      border: 2px solid #8bc34a;
+      height: 46px;
+      width: 46px;
+      padding: 1px;
+      margin: 0px;
+      box-shadow: none;
+    }
+    img.AWAY {
+      border: 2px solid #ffc107;
+      height: 46px;
+      width: 46px;
+      padding: 1px;
+      margin: 0px;
+      box-shadow: none;
+    }
+    img.DND {
+      border: 2px solid #f44336;
+      height: 46px;
+      width: 46px;
+      padding: 1px;
+      margin: 0px;
+      box-shadow: none;
+    }
+  </style>
+
+  <template>
+    <img id="avatar" src="[[src]]" class$="{{_computedClass}}"></img>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'avatar-round',
+
+      properties: {
+        src: {
+          type: String,
+          value: ''
+        },
+        status: {
+          type: String,
+          value: ''
+        },
+        _computedClass: {
+          type: String,
+          computed: '_computeClass(status)'
+        }
+      },
+
+      _computeClass: function (status) {
+        return 'layout vertical center ' + status;
+      }
+    });
+  })();
+</script>

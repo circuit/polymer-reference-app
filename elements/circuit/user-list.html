@@ -1,0 +1,119 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="user-list">
+
+  <style is="custom-style">
+    :host {
+      display: block;
+    }
+    .selected {
+      background-color: rgba(218,218,218,0.7);
+    }
+    .item {
+      cursor: pointer;
+      border-bottom: 1px solid #dadada;
+    }
+    a {
+      color: inherit;
+      text-decoration: inherit;
+    }
+    paper-scroll-header-panel {
+      @apply(--layout-fit);
+      @apply(--layout-vertical);
+      @apply(--paper-font-common-base);
+    }
+    paper-icon-item::shadow #contentIcon {
+      width: 0px;
+    }
+  </style>
+
+  <template>
+    <paper-scroll-header-panel class="fit" condenses keep-condensed-header>
+      <search-input id="search" query="{{filter}}" placeholder="Search"></search-input>
+      <template id="list" is="dom-repeat" items="{{users}}" filter="_filterFn" sort="_sortFn" observe="displayName userPresenceState">
+        <a href="[[_getHref(item.userId)]]">
+          <div class="item" class$="{{_computedClass(item, selectedUser)}}" on-click="_toggleSelection">
+            <paper-icon-item>
+              <avatar-round src="[[item.avatar]]" status="[[item.userPresenceState.state]]"></avatar-round>
+              <paper-item-body two-line>
+                <div>[[item.displayName]]</div>
+                <template is="dom-if" if="[[_showThirdLine(item)]]">
+                  <div secondary><span>[[item.jobTitle]]</span> at <span>[[item.company]]</span></div>
+                </template>
+                <div secondary><span>[[item.emailAddress]]</span></div>
+              </paper-item-body>
+            </paper-icon-item>
+          </div>
+        </a>
+      </template>
+     </paper-scroll-header-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'user-list',
+
+      properties: {
+        users: {
+          type: Array,
+          value: function() {
+            return [];
+          },
+          notify: true
+        },
+        filter: {
+          type: String,
+          observer: '_filterChanged'
+        },
+        selectedUser: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      _getHref: function (userId) {
+        return '#/user/' + userId;
+      },
+
+      _toggleSelection: function(e) {
+        var user = this.$.list.itemForElement(e.target);
+        this.set('selectedUser', user);
+      },
+
+      _computedClass: function (user) {
+        return 'item' + ((this.selectedUser && this.selectedUser.userId === user.userId) ? ' selected': '');
+      },
+
+      _filterFn: function (user) {
+        if (!this.filter) {
+          return true;
+        }
+        var q = this.filter.toLowerCase();
+        return user.firstName.toLowerCase().startsWith(q) || user.lastName.toLowerCase().startsWith(q);
+      },
+
+      _sortFn: function (a, b) {
+        function rank(user) {
+          // Show available users first
+          return (user.userPresenceState.state === 'AVAILABLE' ? 0 : 1) + user.displayName;
+        }
+        return rank(a).localeCompare(rank(b));
+      },
+
+      _filterChanged: function (newValue, oldValue) {
+        this.users = this.users.splice(0); // Don't know of a better way. Even the community suggest to use splice.
+        this.notifyPath('users.splices', this.users); // Trigger UI refresh
+      },
+
+      _showThirdLine: function (user) {
+        return user.jobTitle && user.company;
+      }
+    });
+  })();
+</script>

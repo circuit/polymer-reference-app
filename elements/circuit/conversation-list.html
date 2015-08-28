@@ -1,0 +1,134 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="conversation-list">
+
+  <style is="custom-style">
+    :host {
+      display: block;
+    }
+    paper-scroll-header-panel {
+      @apply(--layout-fit);
+      @apply(--layout-vertical);
+      @apply(--paper-font-common-base);
+    }
+  </style>
+
+  <template>
+    <paper-scroll-header-panel class="fit" condenses keep-condensed-header>
+      <search-input id="search" query="{{_filter}}" placeholder="Search"></search-input>
+      <template id="list" is="dom-repeat" items="[[conversations]]" filter="_filterFn" index-as="index" observe="topLevelItem peerUser.userPresenceState.state">
+        <conversation-selector-item
+          class$="{{_computedClass(item, selectedConvId)}}"
+          on-click="_toggleSelection"
+          conversation="[[item]]">
+        </conversation-selector-item>
+      </template>
+     </paper-scroll-header-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'conversation-list',
+
+      _types: [],
+
+      properties: {
+        conversations: {
+          type: Array,
+          value: null,
+          notify: true
+        },
+        types: {
+          type: String,
+          value: null,
+          observer: '_typesChanged'
+        },
+        _filter: {
+          type: String,
+          observer: '_filterChanged'
+        },
+        selectedConvId: {
+          type: String,
+          notify: true
+        },
+      },
+
+      observers: [
+        '_conversationsChanged(conversations.*)'
+      ],
+
+      selectConversation: function (convId) {
+        // Navigate to route
+        app.$.router.go('/group/' + convId);
+        
+        // Show conversation selected
+        this.set('selectedConvId', convId);
+      },
+
+      _conversationsChanged: function (change) {
+        if (change.path === 'conversations.splices') {
+          // do nothing
+        }
+      },
+
+      _typesChanged: function (newValue, oldValue) {
+        if (!newValue) {
+          this._types = [];
+          return;
+        }
+        this._types = newValue.split(',').map(function (t) {
+          return t.trim().toLowerCase();
+        });
+      },
+
+      _filterChanged: function (newValue, oldValue) {
+        this.conversations = this.conversations.splice(0); // Don't know of a better way. Even the community suggest to use splice.
+        this.notifyPath('conversations.splices', this.conversations); // Trigger UI refresh
+      },
+
+      _getAvatar: function (conversation) {
+        var src;
+        if (conversation.type === 'DIRECT') {
+          src = conversation.peerUser.avatar;
+        } else {
+          src = conversation.avatar;
+        }
+        if (!src.startsWith('http')) {
+          // Safety
+          src = 'https://circuitsandbox.net/content/images/icon-general-default-avatar-green.png';
+        }
+        return src;
+      },
+
+      _computedClass: function (conversation) {
+        return (this.selectedConvId === conversation.convId) ? 'selected': '';
+      },
+
+      _toggleSelection: function(e) {
+        var item = this.$.list.itemForElement(e.target);
+        this.selectConversation(item.convId);
+      },
+
+      _filterFn: function (conversation) {
+        // Filter for conversation types
+        if (this._types.indexOf(conversation.type.toLowerCase()) === -1) {
+          return false;
+        }
+
+        // Filter for search string
+        if (!this._filter) {
+          return true;
+        }
+        var q = this._filter.toLowerCase();
+        return conversation.title.toLowerCase().indexOf(q) !== -1;
+      },
+
+    });
+  })();
+</script>

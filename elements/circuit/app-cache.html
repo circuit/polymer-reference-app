@@ -1,0 +1,73 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="app-cache">
+</dom-module>
+
+<script>
+  (function () {
+
+    var data = {
+      localUser: {},
+      conversations: [],
+      users: []
+    };
+
+    Polymer({
+      is: 'app-cache',
+
+      properties: {
+        data: {
+          type: Object,
+          value: function () { return data; },
+          notify: true
+        }
+      },
+
+      observers: [],
+    
+      getConversation: function (convId) {
+        return this.data.conversations.find(function (c) {
+          return c.convId === convId;
+        })
+      },
+
+      getConversationIndex: function (convId) {
+        var idx = -1;
+        var found = this.data.conversations.find(function(c) {
+          idx++;
+          return c.convId === convId;
+        });
+        return found ? idx : -1;
+      },
+
+      getUser: function (userId) {
+        return this.data.users.find(function (c) {
+          return c.userId === userId;
+        });
+      },
+
+      _sortFn: function (a, b) {
+        return d.displayName.localeCompare(b.displayName);
+      },
+
+      getSortedUsers: function () {
+        return this.data.users.sort(function (a, b) {
+          return a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase());
+        });
+      },
+
+      getUserIndex: function (userId) {
+        var idx = -1;
+        var found = this.data.users.find(function(u) {
+          idx++;
+          return u.userId === userId;
+        });
+        return found ? idx : -1;
+      },
+
+    });
+  })();
+</script>

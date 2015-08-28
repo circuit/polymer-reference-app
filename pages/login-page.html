@@ -1,0 +1,125 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="login-page">
+
+  <style is="custom-style">
+    paper-scroll-header-panel {
+      @apply(--layout-fit);
+      @apply(--layout-vertical);
+      @apply(--paper-font-common-base);
+      background-color: rgb(238, 238, 238);
+    }
+    paper-item {
+      @apply(--layout-horizontal);
+      margin: 10px 16px 0 16px;
+      padding: 17px;
+      border-radius: 6px;
+      background-color: white;
+      border: 1px solid #ddd;
+    }
+    paper-toolbar.tall .title {
+      margin-left: 18px;
+    }
+
+    select {
+      margin-top: 10px;
+    }
+    section label {
+      font-weight: bold;
+    }
+    max-width {
+      max-width: 400px;
+    }
+    section {
+      padding: 15px;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+
+  <template>
+    <paper-scroll-header-panel id="feedPanel" class="fit" condenses keep-condensed-header>
+      <paper-toolbar class="tall">
+        <span class="flex"></span>
+        <div id="title" class="bottom title">Sign In with your Circuit Sandbox credentials</div>
+      </paper-toolbar>
+
+      <paper-item>
+        <div class="horizontal-section">
+
+          <section> 
+            <div class="error">[[_error]]</div>
+            <div>
+              <paper-input id="email" 
+                type="email" 
+                value="{{_email::input}}" 
+                required 
+                error-message="Invalid email" 
+                label="Email" 
+                onfocusout="validate()">
+              </paper-input>
+              <paper-input id="password" 
+                type="password" 
+                value="{{_password::input}}" 
+                required 
+                error-message="Password is required" 
+                label="Password"
+                onfocusout="validate()">
+              </paper-input>
+            </div>
+          </section>
+
+          <section> 
+            <paper-button raised disabled$="[[_isFormInvalid(_email, _password)]]" on-click="_create">Sign In</paper-button>
+          </section>
+
+          <section>
+            <div>
+              <br>
+              New to <a href="https://www.circuit.com/">Circuit</a>? <a href="https://www.circuit.com/web/developers/registration">Register</a> for a <a href="https://www.circuit.com/web/developers/">developer</a> account.
+            </div>
+          </section>
+        </div>
+      </paper-item>
+
+    </paper-scroll-header-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'login-page',
+
+      properties: {
+        _error: String,
+        _email: {
+          type: String,
+          value: ''
+        },
+        _password: {
+          type: String,
+          value: ''
+        }
+      },
+
+      _isFormInvalid: function (email, password) {
+        return !email || !password;
+      },
+
+      _create: function () {
+        app.api.authenticate({email: this._email, password: this._password}).then(function () {
+          window.location.href ='/';
+        }, function (err) {
+          this.set('_error', err);
+        }.bind(this));
+      },
+
+    });
+  })();
+</script>

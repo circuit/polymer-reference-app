@@ -1,0 +1,32 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="bind-unsafe">
+
+  <template>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'bind-unsafe',
+
+      properties: {
+        html: {
+          type: String,
+          value: '',
+          observer: '_htmlChanged'
+        }
+      },
+
+      _htmlChanged: function() {
+        // WARNING: potential XSS vulnerability if 'html' comes from an untrusted source
+        this.innerHTML = this.html;
+      }
+    });
+  })();
+</script>

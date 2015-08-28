@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 Unify Inc. All rights reserved.
+-->
+
+<html>
+<head>
+
+  <title>Circuit Polymer Reference App</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <script src="https://circuitsandbox.net/circuit.js"></script>
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="bower_components/moment/min/moment.min.js"></script>
+  <link rel="import" href="elements/elements.html">
+
+  <style is="custom-style">
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+  </style>
+
+</head>
+<body unresolved class="fullbleed layout vertical">
+  <template is="dom-bind" id="app">
+
+    <paper-drawer-panel id="navDrawerPanel" responsive-width="1280px">
+
+      <div class="nav" drawer>
+        <!-- Nav Content -->
+        Nothing here yet
+      </div>
+
+      <paper-drawer-panel id="mainDrawerPanel" class="main-drawer-panel" main responsive-width="600px"
+          drawer-width="[[computeListWidth(_isMobile)]]" drawer-toggle-attribute="list-toggle"
+          narrow="{{_isMobile}}">
+
+        <paper-header-panel class="list-panel" drawer>
+
+          <!-- List Toolbar -->
+          <paper-toolbar class="medium-tall">
+            <!-- <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button -->
+            <paper-icon-button icon="account-circle"></paper-icon-button>
+            <div>[[cache.localUser.displayName]]</div>
+            <span class="flex"></span>
+            <paper-icon-button icon="add" onclick="[[newConversation]]"></paper-icon-button>
+            <div class="bottom fit" horizontal layout>
+              <paper-tabs selected="{{selectedTab}}" flex style="max-width: 600px;">
+                <paper-tab>Groups</paper-tab>
+                <paper-tab>Favorites</paper-tab>
+                <paper-tab>Users</paper-tab>
+              </paper-tabs>
+            </div>
+          </paper-toolbar>
+
+          <iron-pages selected="{{selectedTab}}">
+            <conversation-list id="groupList" conversations="[[cache.conversations]]" types="direct,group,open"></conversation-list>
+            <conversation-list id="favList" conversations="[[favoriteConversations]]" types="direct,group,open"></conversation-list>
+            <user-list id="userList" users="{{cache.users}}" filter="[[filter]]"></user-list>
+          </iron-pages>
+
+        </paper-header-panel>
+
+        <paper-header-panel class="content-panel" main>
+
+          <!-- Main Content -->
+          <div class="content">
+            <app-router id="router">
+              <app-route path="/login" import="pages/login-page.html"></app-route>
+              <app-route path="/group/:convId" import="pages/feed-page.html" bindRouter></app-route>
+              <app-route path="/direct/:convId" import="pages/feed-page.html"></app-route>
+              <app-route path="/user/:userId" import="pages/user-page.html"></app-route>
+              <app-route path="/new" import="pages/new-page.html"></app-route>
+            </app-router>
+          </div>
+
+        </paper-header-panel>
+
+      </paper-drawer-panel>
+
+    </paper-drawer-panel>
+
+    <app-cache id="cache" data="{{cache}}"></app-cache>
+
+    <paper-toast id="logonToast" duration="3000"></paper-toast>
+
+    <iron-localstorage name="circuit-ref-app-favorites"
+      value="{{favorites}}"
+      on-iron-localstorage-load-empty="initializeDefaultFavorites">
+    </iron-localstorage>
+
+  </template>
+
+  <script src="app.js"></script>
+
+</body>
+</html>

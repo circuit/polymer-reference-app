@@ -1,0 +1,169 @@
+<!--
+@license
+Copyright (c) 2015 Unify. All rights reserved.
+-->
+
+<dom-module id="conversation-selector-item">
+
+  <style is="custom-style">
+    :host {
+      display: block;
+    }
+    :host(.selected) {
+      background-color: rgba(218,218,218,0.7);
+    }
+    .item {
+      cursor: pointer;
+      border-bottom: 1px solid #dadada;
+    }
+    .timestamp {
+      color: #727272;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 20px
+    }
+    .ellipsis-2 {
+      max-height: 42px;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      word-wrap: break-word;
+      display: -webkit-box;
+      white-space: normal;
+    }
+    .unread {
+      border-radius: 4px;
+      background-color: #88c541;
+      margin-top: 7px;
+      text-align: center;
+      float: right;
+      min-width: 17px;
+      height: 17px
+    }
+    .unread > span {
+      color: #fff;
+      text-align: center;
+      font-size: 12px;
+      position: relative;
+      top: -4px;
+    }
+    a {
+      color: inherit;
+      text-decoration: inherit;
+    }
+    paper-icon-item::shadow #contentIcon {
+      width: 0px;
+    }
+  </style>
+
+  <template>
+    <a href="[[_getHref(conversation.convId)]]">
+      <div class="item">
+        <paper-icon-item>
+          <avatar-round src="[[conversation.avatar]]" status="[[_presence.state]]"></avatar-round>
+          <paper-item-body two-line>
+            <div>[[conversation.title]]</div>
+            <div secondary class="ellipsis-2"><span>[[conversation.topLevelItem.teaser]]</span></div>
+          </paper-item-body>
+          <div class="layout vertical">
+            <div class="timestamp">[[_getTimestamp(conversation)]]</div>
+            <div style="height: 25px">
+              <template is="dom-if" if="[[conversation.userData.unreadItems]]">
+                <div class="layout horizontal">
+                  <span class="flex"></span>
+                  <div class="unread"><span>[[conversation.userData.unreadItems]]</span></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </paper-icon-item>
+      </div>
+    </a>
+  </template>
+
+</dom-module>
+
+<script>
+  (function () {
+    Polymer({
+      is: 'conversation-selector-item',
+
+      properties: {
+        conversation: {
+          type: Object,
+          value: function() {
+            return {};
+          },
+          notify: true
+        },
+        _presence: { 
+          type: String
+        },
+      },
+
+      observers: [
+        '_conversationChanged(conversation.*)'
+      ],
+
+      ready: function () {
+        this._initES6Observers();
+      },
+
+      _conversationChanged: function (change) {
+        if (change.path === 'conversation') {
+          // Initialize presence for direct conversation peer
+          if (this.conversation.type === 'DIRECT') {
+            this._presence =  this.conversation.otherUsers[0].userPresenceState;
+          } else {
+            this._presence = 'OFFLINE';
+          }
+        }
+      },
+
+      _initES6Observers: function () {
+        // Polymer has no easy way to notify related object such as user changes
+        // within other object such as a conversation. Using native Object.observe
+        // seems the better option for such object changes.
+        var that = this;
+        if (this.conversation.type === 'DIRECT') {
+          Object.observe(this.conversation.otherUsers[0], function(changes) {
+            changes.forEach(function(change) {
+              if (change.name === 'userPresenceState') {
+                that.set('_presence', change.object.userPresenceState);
+              }
+            });
+          });
+        }
+      },
+
+      _getHref: function () {
+        return '#/' + (this.conversation.type === 'DIRECT' ? 'direct' : 'group') + '/' + this.conversation.convId;
+      },
+
+      _getAvatar: function (conversation) {
+        var src;
+        if (conversation.type === 'DIRECT') {
+          src = conversation.peerUser.avatar;
+        } else {
+          src = conversation.avatar;
+        }
+        if (!src || !src.startsWith('http')) {
+          // Safety
+          src = 'https://circuitsandbox.net/content/images/icon-general-default-avatar-green.png';
+        }
+        return src;
+      },
+
+      _getTimestamp: function (conv) {
+        // Workaround since moment does not support multiple calendar configurations
+        var timestamp = conv.topLevelItem ?  conv.topLevelItem.creationTime : conv.lastItemModificationTime;
+        moment.locale('custom-short');
+        result = moment.unix(timestamp / 1000).calendar();
+        moment.locale('en');
+        return result;
+      },
+
+    });
+  })();
+</script>
