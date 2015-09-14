@@ -83,7 +83,7 @@ Copyright (c) 2015 Unify Inc. All rights reserved.
   function init() {
     app.selectedTab = 0;
 
-    api.logon('roger.urscheler@unify.com', 'Ansible.2014')
+    api.logon()
       .then(function (user) {
         app.set('cache.localUser', user);
         showToast('Logged on as ' + app.cache.localUser.displayName);
@@ -121,7 +121,7 @@ Copyright (c) 2015 Unify Inc. All rights reserved.
       Promise.all([api.getTelephonyConversationId(), api.getSupportConversationId()]).then(function(convIds) {
         resolve(convIds);
       }, function(err) {
-        reject(err);
+        resolve([]);
       });
     });  
   }
